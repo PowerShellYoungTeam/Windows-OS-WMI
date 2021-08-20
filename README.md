@@ -38,6 +38,18 @@ Scripts for generally working with windows boxes, usually WinPoSh 5.1
     Disable-Service  Computer0057P Spooler, Get-content c:\temp\hostnames.csv (or.txt) | Disable-service Spooler
 ### NOTES
     run against one machine = Disable-Service  Computer0057P Spooler or a list = Get-content c:\temp\hostnames.csv (or.txt) | Disable-Service Spooler
+    
+# Get-HardwareOSInfo
+
+### SYNOPSIS
+    Function to pull Hardware & OS info from a machine (prints to console and passes out object with data)
+    by Steven Wight
+### DESCRIPTION
+    Get-HardwareOSInfo -ComputerName <Hostname> -Domain <domain> (default = POSHYT)
+### EXAMPLE
+    Get-HardwareOSInfo Computer01
+### NOTES
+    You may need to edit the Domain depending on your environment (find $Domain)
 
 
 ## Find-ProcessOnMachines
