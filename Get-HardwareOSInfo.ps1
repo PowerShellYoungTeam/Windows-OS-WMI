@@ -32,6 +32,25 @@ Function Get-HardwareOSInfo{
     # Check machine is online 
     if($True -eq $AdCheck){   
         $PathTest = Test-Connection -Computername $Computer.DNSHostname -BufferSize 16 -Count 1 -Quiet
+        if($false -eq $PathTest){
+            
+            #Output machine is offline to the console
+            Write-host -ForegroundColor Red "Issues connecting to $($ComputerName)"
+            
+            #Flush local DNS cache
+            Write-host -ForegroundColor Red "Flushing DNS"
+            ipconfig /flushdns | out-null
+            
+            #Resolve DNS for machine
+            Write-host -ForegroundColor Red "Resolving DNS name for $($ComputerName)"
+            $DNSCheck = (Resolve-DnsName $Computer.DNSHostname -ErrorAction SilentlyContinue)
+            
+            #If DNS is resolved, re ping
+            if($null -eq $DNSCheck){
+                Write-host -ForegroundColor Red "DNS entry found,Re-pinging $($ComputerName)"
+                $PathTest = Test-Connection -Computername $Computer.DNSHostname -BufferSize 16 -Count 1 -Quiet
+            }   
+        }
     } #End of If ADcheck is True
 
     #if Machine is online
@@ -41,36 +60,75 @@ Function Get-HardwareOSInfo{
         Write-host -ForegroundColor Green "$($ComputerName) is online"
         #Get Machine Info
         
-        
         #Grab CPU info
-        $CPUInfo = (Get-WmiObject Win32_Processor -ComputerName $Computer.DNSHostname)
+        try{
+            $CPUInfo = (Get-WmiObject Win32_Processor -ComputerName $Computer.DNSHostname -ErrorAction Stop)
+        }catch{
+            $CPUInfo = $_.Exception.Message
+        }
 
         #Grab RAM info
-        $PhysicalMemory = Get-WmiObject CIM_PhysicalMemory -ComputerName $Computer.DNSHostname | Measure-Object -Property capacity -Sum | ForEach-Object { [Math]::Round(($_.sum / 1GB), 2) }
+        Try{
+            $PhysicalMemory = Get-WmiObject CIM_PhysicalMemory -ComputerName $Computer.DNSHostname -ErrorAction Stop | Measure-Object -Property capacity -Sum | ForEach-Object { [Math]::Round(($_.sum / 1GB), 2) }
+        }catch{
+            $PhysicalMemory = $_.Exception.Message
+        }
 
         #Grab Computer syste info
-        $computersystem = (Get-wmiobject -ComputerName $Computer.DNSHostname win32_computersystem -Property *)
+        try{
+            $computersystem = (Get-wmiobject -ComputerName $Computer.DNSHostname win32_computersystem -Property * -ErrorAction Stop)
+        }catch{
+            $computersystem = $_.Exception.Message
+        }
 
         #Grab NIC Info
-        $NICinfo = (Get-WmiObject win32_networkadapterconfiguration -ComputerName $Computer.DNSHostname | Where-Object {$null -ne $_.ipaddress})
-                
+        try{
+            $NICinfo = (Get-WmiObject win32_networkadapterconfiguration -ComputerName $Computer.DNSHostname -ErrorAction Stop | Where-Object {$null -ne $_.ipaddress})
+        }Catch{
+            $NICinfo = $_.Exception.Message
+        }
+        
         #Grab Monitor Info
-        $Monitors = Get-WmiObject -Namespace "root\WMI" -Class "WMIMonitorID" -ComputerName $Computer.DNSHostname -ErrorAction SilentlyContinue
+        Try{
+            $Monitors = Get-WmiObject -Namespace "root\WMI" -Class "WMIMonitorID" -ComputerName $Computer.DNSHostname -ErrorAction SilentlyContinue
+        }Catch{
+            $Monitors = $_.Exception.Message
+        }
 
         #Grab OS info
-        $OSinfo = (Get-WmiObject -Class Win32_OperatingSystem -ComputerName $Computer.DNSHostname | Select-Object * )
+        Try{
+            $OSinfo = (Get-WmiObject -Class Win32_OperatingSystem -ComputerName $Computer.DNSHostname -ErrorAction Stop | Select-Object * )
+        }Catch{
+            $OSinfo = $_.Exception.Message
+        }
 
         #Grab BIOS info
-        $BIOSinfo = (Get-WmiObject -Class Win32_BIOS -ComputerName $Computer.DNSHostname)
+        Try{
+            $BIOSinfo = (Get-WmiObject -Class Win32_BIOS -ComputerName $Computer.DNSHostname -ErrorAction Stop)
+        }Catch{
+            $BIOSinfo = $_.Exception.Message
+        }
 
         #Grab OS Release ID
-        $OSReleaseID = Invoke-Command -ComputerName $Computer.DNSHostname -scriptblock {(Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ReleaseId).ReleaseId}
+        Try{
+            $OSReleaseID = Invoke-Command -ComputerName $Computer.DNSHostname -scriptblock {(Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ReleaseId -ErrorAction SilentlyContinue).ReleaseId}
+        }Catch{
+            $OSReleaseID = $_.Exception.Message
+        }
 
         #Work out if Hyperthreading is enabled
-        $Hyperthreading = ($CPUInfo | measure-object -Property NumberOfLogicalProcessors -sum).Sum -gt $($CPUInfo | measure-object -Property NumberOfCores -sum).Sum
+        Try{
+            $Hyperthreading = ($CPUInfo | measure-object -Property NumberOfLogicalProcessors -sum).Sum -gt $($CPUInfo | measure-object -Property NumberOfCores -sum).Sum
+        }Catch{
+            $Hyperthreading = $_.Exception.Message
+        }
 
         #Grab info on c: drive (screw other drives...)
-        $disk = (Get-WmiObject Win32_LogicalDisk -ComputerName $computer.DNSHostname -Filter "DeviceID='C:'" | Select-Object FreeSpace,Size)
+        Try{
+            $disk = (Get-WmiObject Win32_LogicalDisk -ComputerName $computer.DNSHostname -Filter "DeviceID='C:'" -ErrorAction Stop | Select-Object FreeSpace,Size)
+        }Catch{
+            $disk = $_.Exception.Message
+        }
 
         # build object to use to fill CSV with data and print to screen
         $MachineInfoObj = [pscustomobject][ordered] @{
