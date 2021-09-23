@@ -171,7 +171,7 @@ Function Get-HardwareOSInfo{
             ComputerName =  $ComputerName
             Description = $Computer.description
             SerialNo = "offline"
-            IPaddress = "offline"
+            IPaddress = $DNSCheck.IPAddress
             Mac = "offline"
             Model = "offline"
             Manufacturer = "offline"
