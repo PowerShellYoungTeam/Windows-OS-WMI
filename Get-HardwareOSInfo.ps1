@@ -64,7 +64,7 @@ Function Get-HardwareOSInfo{
         try{
             $CPUInfo = (Get-WmiObject Win32_Processor -ComputerName $Computer.DNSHostname -ErrorAction Stop)
         }catch{
-            $CPUInfo = $_.Exception.Message
+            $CPUInfo.Name = $_.Exception.Message
         }
 
         #Grab RAM info
@@ -78,14 +78,14 @@ Function Get-HardwareOSInfo{
         try{
             $computersystem = (Get-wmiobject -ComputerName $Computer.DNSHostname win32_computersystem -Property * -ErrorAction Stop)
         }catch{
-            $computersystem = $_.Exception.Message
+            $computersystem.Model = $_.Exception.Message
         }
 
         #Grab NIC Info
         try{
             $NICinfo = (Get-WmiObject win32_networkadapterconfiguration -ComputerName $Computer.DNSHostname -ErrorAction Stop | Where-Object {$null -ne $_.ipaddress})
         }Catch{
-            $NICinfo = $_.Exception.Message
+            $NICinfo.ipaddress = $_.Exception.Message
         }
         
         #Grab Monitor Info
@@ -99,16 +99,16 @@ Function Get-HardwareOSInfo{
         Try{
             $OSinfo = (Get-WmiObject -Class Win32_OperatingSystem -ComputerName $Computer.DNSHostname -ErrorAction Stop | Select-Object * )
         }Catch{
-            $OSinfo = $_.Exception.Message
+            $OSinfo.version = $_.Exception.Message
         }
 
         #Grab BIOS info
         Try{
             $BIOSinfo = (Get-WmiObject -Class Win32_BIOS -ComputerName $Computer.DNSHostname -ErrorAction Stop)
         }Catch{
-            $BIOSinfo = $_.Exception.Message
+            $BIOSinfo.SerialNumber = $_.Exception.Message
         }
-
+        
         #Grab OS Release ID
         Try{
             $OSReleaseID = Invoke-Command -ComputerName $Computer.DNSHostname -scriptblock {(Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ReleaseId -ErrorAction SilentlyContinue).ReleaseId}
