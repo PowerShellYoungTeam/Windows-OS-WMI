@@ -94,7 +94,14 @@ Function Get-HardwareOSInfo{
         }Catch{
             $Monitors = $_.Exception.Message
         }
-
+        
+        #Grab Graphics card info
+        Try{
+            $GraphicsCard = Get-WmiObject win32_VideoController -ComputerName $Computer.DNSHostname -ErrorAction SilentlyContinue
+        }Catch{
+            $GraphicsCard = $_.Exception.Message
+        }
+        
         #Grab OS info
         Try{
             $OSinfo = (Get-WmiObject -Class Win32_OperatingSystem -ComputerName $Computer.DNSHostname -ErrorAction Stop | Select-Object * )
@@ -140,6 +147,9 @@ Function Get-HardwareOSInfo{
             Model = $computersystem.Model
             Manufacturer = $computersystem.Manufacturer
             Screens = $Monitors.count
+            GraphicsCard = $GraphicsCard.name
+            VideoDriverVersion = $GraphicsCard.DriverVersion
+            VideoRes = $GraphicsCard.VideoModeDescription
             Domain = $Domain
             OS = $Computer.OperatingSystem
             CPU =  [string]$CPUInfo.Name
@@ -167,15 +177,19 @@ Function Get-HardwareOSInfo{
         Write-host -ForegroundColor Red "$($ComputerName) is offline"
 
         # build object to use to fill CSV with data and print to screen (Set Variables to "offline")
+         # build object to use to fill CSV with data and print to screen (Set Variables to "offline")
         $MachineInfoObj = [pscustomobject][ordered] @{
             ComputerName =  $ComputerName
             Description = $Computer.description
             SerialNo = "offline"
-            IPaddress = $DNSCheck.IPAddress
+            IPaddress = "offline"
             Mac = "offline"
             Model = "offline"
             Manufacturer = "offline"
             Screens = "offline"
+            GraphicsCard = "offline"
+            VideoDriverVersion = "offline"
+            VideoRes = "offline"
             Domain = $Domain
             OS = $Computer.OperatingSystem
             CPU =  "offline"
@@ -190,7 +204,7 @@ Function Get-HardwareOSInfo{
             OS_Release = "offline"
             OS_Architecture = "offline"
         }
-
+        
         #output info to console
         Write-host "$($MachineInfoObj)"
 
