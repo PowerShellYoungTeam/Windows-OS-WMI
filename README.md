@@ -51,6 +51,17 @@ Scripts for generally working with windows boxes, usually WinPoSh 5.1
 ### NOTES
     You may need to edit the Domain depending on your environment (find $Domain)
 
+# Correct-SystemTime
+
+### SYNOPSIS
+    Function to correct wrong time and date on remote machines
+    by Steven Wight
+### DESCRIPTION
+    Correct-SystemTime -ComputerName <Hostname> -Domain <domain> (default = POSHYT)
+### EXAMPLE
+    Correct-SystemTime Computer01
+### NOTES
+    This assumes the correct time and date on the machine it's being run from
 
 ## Find-ProcessOnMachines
 
