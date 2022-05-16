@@ -52,7 +52,7 @@ Function Correct-SystemTime{
             Write-Host ""
             Write-Host -ForegroundColor RED "$($ComputerName) time is out"
             Write-Host -ForegroundColor RED "Remote Time - $($RemoteTimeAndDate)"
-            Write-Host -ForegroundColor RED "Remote Time - $($TimeAndDate)"
+            Write-Host -ForegroundColor RED "Local Time - $($TimeAndDate)"
             Write-Host ""
 
             $Continue = Read-Host -Prompt 'Do you wish to correct? -  Press Y to continue'
